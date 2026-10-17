@@ -1,0 +1,28 @@
+{
+  "name": "vima-tester",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Web-based API tester for localhost services, powered by the vima-tunneler local agent.",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @vima/protocol && npm run build -w @vima/relay && npm run build -w @vima/web",
+    "test": "npm run test -w @vima/protocol && npm run test -w @vima/relay",
+    "typecheck": "npm run typecheck -w @vima/protocol && npm run typecheck -w @vima/relay && npm run typecheck -w @vima/web",
+    "dev": "concurrently -n relay,web -c blue,magenta \"npm:dev:relay\" \"npm:dev:web\"",
+    "dev:relay": "npm run dev -w @vima/relay",
+    "dev:web": "npm run dev -w @vima/web",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "db:migrate": "npm run prisma:migrate -w @vima/relay",
+    "db:generate": "npm run prisma:generate -w @vima/relay"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

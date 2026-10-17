@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: vima-tester-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vima
+      POSTGRES_PASSWORD: vima
+      POSTGRES_DB: vima_tester
+    ports:
+      # 5434 avoids clashing with a host Postgres on 5432 and other local DBs.
+      - "5434:5432"
+    volumes:
+      - vima-tester-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vima -d vima_tester"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  vima-tester-db:
