@@ -22,7 +22,7 @@ type VerifyClientCallback = (result: boolean, code?: number, message?: string) =
  *     the gateway reads the raw socket instead.
  */
 export class AgentWsAdapter extends WsAdapter {
-  constructor(applicationRef: INestApplicationContext) {
+  constructor(private readonly applicationRef: INestApplicationContext) {
     super(applicationRef);
   }
 
