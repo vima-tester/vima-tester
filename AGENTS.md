@@ -33,8 +33,7 @@ npm run typecheck   # all workspaces
 npm test            # protocol (vitest) + relay (jest)
 npm run dev         # relay :3001 + web :5173
 
-npm run db:up       # Postgres via docker compose (host port 5434)
-npm run db:migrate  # prisma migrate dev
+npm run db:migrate  # prisma migrate dev (against DATABASE_URL)
 ```
 
 Single workspace: `npm run <script> -w @vima/relay` / `@vima/web` / `@vima/protocol`.
@@ -49,6 +48,7 @@ Test runners differ by package: **protocol + web use Vitest**, **relay uses Jest
 - **Nest's WS message dispatcher is disabled on purpose.** `AgentWsAdapter.bindMessageHandlers` is a no-op because agent frames are raw protocol objects (`{type: ...}`), not Nest's `{event, data}` envelope; `AgentGateway` reads the raw socket. Do not add `@SubscribeMessage` handlers.
 - **One connection per token:** a second connection for the same `agentId` replaces (closes) the first — see `AgentConnectionsService.register`.
 - **Everything is scoped to the authenticated user.** Jobs resolve the caller's own connected agent (`findForUser`); never trust a client-supplied agent id.
+- **User auth is delegated to Firebase.** The browser signs in with the Firebase SDK (Google or email/password) and sends the resulting ID token as `Authorization: Bearer`. `FirebaseAuthGuard` verifies it with the Firebase Admin SDK and resolves the DB `User` by `firebaseUid` (`UsersService.resolve`, find-or-create). The relay never sees a password. Do **not** reintroduce a local password/JWT flow. This is separate from agent auth, which still uses the long-lived agent token.
 - Config is validated at boot in `src/config/env.ts` (Zod). New env vars must be added there and to `.env.example`.
 
 ## Web protocol invariants the relay must uphold
@@ -67,6 +67,7 @@ Relay error mapping (`JobsService.toHttpError`): `agent busy` → 503, `refusing
 ## Security rules (non-negotiable)
 
 - **Every job goes to the authenticated user's own agent only.** Never trust a client-supplied agent id without an ownership check.
+- User identity comes from a verified Firebase ID token, keyed to the DB `User` by `firebaseUid`. Never trust a client-supplied user id or `firebaseUid`; always take it from the verified token.
 - The browser never talks to `localhost` and never receives the agent token.
 - Pairing codes are single-use and short-lived. Agent tokens are long-lived, stored hashed, and revocable.
 - Do not log request/response bodies, `Authorization` headers, cookies, or tokens.

@@ -38,18 +38,25 @@ Scripts:
 
 ## Configuration
 
-Copy `.env.example` to `.env` (git-ignored) and adjust if the relay is not on the default port:
+Copy `.env.example` to `.env.local` (git-ignored) and set the relay URL and the
+public Firebase web config:
 
 ```
 VITE_API_URL="http://localhost:3001"
+VITE_FIREBASE_API_KEY="..."
+VITE_FIREBASE_AUTH_DOMAIN="your-project.firebaseapp.com"
+VITE_FIREBASE_PROJECT_ID="your-project"
+VITE_FIREBASE_APP_ID="1:...:web:..."
 ```
 
-`VITE_API_URL` is read at build time; it defaults to `http://localhost:3001`.
+All are read at build time; `VITE_API_URL` defaults to `http://localhost:3001`.
 
 ## What's on screen
 
-1. **Auth gate** — login/register against `POST /api/auth/{login,register}`. The access token is
-   kept in `localStorage` under `vima.token` and validated against `GET /api/auth/me` on load.
+1. **Auth gate** — Google or email/password sign-in via the Firebase JS SDK
+   (`src/firebase.ts`). Firebase is the source of truth for the session; the app
+   listens to `onAuthStateChanged` and calls `GET /api/auth/me` to resolve the
+   relay-side user. No token is written to `localStorage`.
 2. **Request builder** — method, URL, key/value headers, body (disabled for `GET`/`HEAD`), plus an
    optional per-request timeout and an explicit `insecureTLS` toggle. Hosts outside the agent's
    loopback allowlist are rejected before anything is sent.
@@ -63,10 +70,10 @@ VITE_API_URL="http://localhost:3001"
 
 ```
 src/
-  api/client.ts        fetch wrapper: bearer token, error parsing, Zod validation of responses
+  api/client.ts        fetch wrapper: Firebase ID token, error parsing, Zod validation of responses
   api/hooks.ts         TanStack Query hooks (agents list, pairing code, revoke, run mutation)
-  auth/storage.ts      token/user persistence in localStorage
-  auth/AuthContext.tsx session state; verifies the token on boot and drops it on any 401
+  firebase.ts          Firebase app + Auth instance (Google and email/password)
+  auth/AuthContext.tsx session state from onAuthStateChanged; resolves the user via GET /api/auth/me
   components/          AuthForm, RequestBuilder, ResponseViewer, AgentsPanel
   lib/responseBody.ts  base64 -> text/JSON/binary classification + download helper
   App.tsx, main.tsx, styles.css
