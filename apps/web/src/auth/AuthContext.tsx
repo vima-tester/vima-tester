@@ -8,115 +8,102 @@ import {
   type ReactNode,
 } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import type { AuthUser } from '@vima/protocol';
 import {
-  ApiRequestError,
-  UNAUTHORIZED_EVENT,
-  fetchMe,
-  login as loginRequest,
-  register as registerRequest,
-} from '../api/client';
-import { clearSession, getStoredUser, getToken, setSession, setStoredUser } from './storage';
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut as firebaseSignOut,
+} from 'firebase/auth';
+import type { AuthUser } from '@vima/protocol';
+import { ApiRequestError, UNAUTHORIZED_EVENT, fetchMe } from '../api/client';
+import { firebaseAuth } from '../firebase';
 
 export type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 
 export interface AuthContextValue {
   status: AuthStatus;
   user: AuthUser | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  registerWithEmail: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }): JSX.Element {
   const queryClient = useQueryClient();
-  const [user, setUser] = useState<AuthUser | null>(() => (getToken() ? getStoredUser() : null));
-  const [status, setStatus] = useState<AuthStatus>(() =>
-    getToken() ? 'loading' : 'anonymous',
-  );
+  const [status, setStatus] = useState<AuthStatus>('loading');
+  const [user, setUser] = useState<AuthUser | null>(null);
 
-  const logout = useCallback(() => {
-    clearSession();
-    setUser(null);
-    setStatus('anonymous');
+  // Firebase is the source of truth for the session. Whenever it changes we
+  // re-resolve the relay-side user, which find-or-creates the database row for
+  // the Firebase UID.
+  useEffect(() => {
+    let cancelled = false;
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (firebaseUser) => {
+      if (cancelled) return;
+      if (!firebaseUser) {
+        setUser(null);
+        setStatus('anonymous');
+        return;
+      }
+      setStatus('loading');
+      fetchMe()
+        .then((me) => {
+          if (cancelled) return;
+          setUser(me);
+          setStatus('authenticated');
+        })
+        .catch((error: unknown) => {
+          if (cancelled) return;
+          if (error instanceof ApiRequestError && error.statusCode === 401) {
+            // The relay rejected the token: drop the Firebase session too.
+            void firebaseSignOut(firebaseAuth);
+            return;
+          }
+          // Relay unreachable: stay signed in at the Firebase level so a relay
+          // restart does not sign the user out.
+          setUser({ id: firebaseUser.uid, email: firebaseUser.email ?? '' });
+          setStatus('authenticated');
+        });
+    });
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, []);
+
+  const logout = useCallback(async () => {
+    await firebaseSignOut(firebaseAuth);
     // Drop cached relay data so the next user never sees the previous session.
     queryClient.clear();
   }, [queryClient]);
 
-  // Trust nothing on boot: verify the stored token against `GET /api/auth/me`.
+  // Any 401 from the API means the ID token was rejected: end the session.
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      setStatus('anonymous');
-      return;
-    }
-
-    let cancelled = false;
-    setStatus('loading');
-
-    fetchMe()
-      .then((me) => {
-        if (cancelled) return;
-        setUser(me);
-        setStoredUser(me);
-        setStatus('authenticated');
-      })
-      .catch((error: unknown) => {
-        if (cancelled) return;
-        if (error instanceof ApiRequestError && error.statusCode === 401) {
-          logout();
-          return;
-        }
-        // Relay unreachable: keep the cached identity so a restart of the relay
-        // does not sign the user out.
-        const cached = getStoredUser();
-        if (cached) {
-          setUser(cached);
-          setStatus('authenticated');
-        } else {
-          logout();
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [logout]);
-
-  // Any 401 from the API means the token is dead: end the session immediately.
-  useEffect(() => {
-    const handler = () => logout();
+    const handler = () => void firebaseSignOut(firebaseAuth);
     window.addEventListener(UNAUTHORIZED_EVENT, handler);
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, handler);
-  }, [logout]);
-
-  const applySession = useCallback((user: AuthUser, accessToken: string) => {
-    setSession(accessToken, user);
-    setUser(user);
-    setStatus('authenticated');
   }, []);
 
-  const login = useCallback(
-    async (email: string, password: string) => {
-      const response = await loginRequest(email, password);
-      applySession(response.user, response.accessToken);
-    },
-    [applySession],
-  );
+  const signInWithGoogle = useCallback(async () => {
+    await signInWithPopup(firebaseAuth, new GoogleAuthProvider());
+  }, []);
 
-  const register = useCallback(
-    async (email: string, password: string) => {
-      const response = await registerRequest(email, password);
-      applySession(response.user, response.accessToken);
-    },
-    [applySession],
-  );
+  const signInWithEmail = useCallback(async (email: string, password: string) => {
+    await signInWithEmailAndPassword(firebaseAuth, email, password);
+  }, []);
+
+  const registerWithEmail = useCallback(async (email: string, password: string) => {
+    await createUserWithEmailAndPassword(firebaseAuth, email, password);
+  }, []);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ status, user, login, register, logout }),
-    [status, user, login, register, logout],
+    () => ({ status, user, signInWithGoogle, signInWithEmail, registerWithEmail, logout }),
+    [status, user, signInWithGoogle, signInWithEmail, registerWithEmail, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

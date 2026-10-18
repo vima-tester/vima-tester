@@ -1,12 +1,12 @@
 import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { RunRequestSchema, type AuthUser, type RunRequest, type RunResponse } from '@vima/protocol';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 import { CurrentUser } from '../common/current-user.decorator';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { JobsService } from './jobs.service';
 
 @Controller('api/run')
-@UseGuards(JwtAuthGuard)
+@UseGuards(FirebaseAuthGuard)
 export class RunController {
   constructor(private readonly jobs: JobsService) {}
 

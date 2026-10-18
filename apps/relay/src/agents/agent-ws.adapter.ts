@@ -2,7 +2,7 @@ import { INestApplicationContext } from '@nestjs/common';
 import { WsAdapter } from '@nestjs/platform-ws';
 import type { IncomingMessage } from 'node:http';
 import { AgentsService } from './agents.service';
-import { extractBearerToken } from './bearer';
+import { extractBearerToken } from '../common/bearer';
 
 interface UpgradeRequest extends IncomingMessage {
   agentId?: string;

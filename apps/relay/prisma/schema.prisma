@@ -11,10 +11,11 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  createdAt    DateTime @default(now())
+  id          String   @id @default(uuid())
+  /// Firebase UID (from the verified ID token) — the identity key from Firebase.
+  firebaseUid String   @unique
+  email       String   @unique
+  createdAt   DateTime @default(now())
 
   agents       Agent[]
   pairingCodes PairingCode[]

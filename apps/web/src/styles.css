@@ -352,6 +352,40 @@ textarea {
   font-weight: 500;
 }
 
+.button.google {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #1f2328;
+  font-weight: 600;
+}
+
+.button.google:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #f3f4f6;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
 /* --- Request builder ---------------------------------------------------- */
 
 .request-line {

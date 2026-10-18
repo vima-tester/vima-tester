@@ -2,19 +2,17 @@ import { z } from 'zod';
 import {
   AgentSummarySchema,
   ApiErrorSchema,
-  AuthResponseSchema,
   AuthUserSchema,
   PairingCodeResponseSchema,
   RunRequestSchema,
   RunResponseSchema,
   type AgentSummary,
-  type AuthResponse,
   type AuthUser,
   type PairingCodeResponse,
   type RunRequest,
   type RunResponse,
 } from '@vima/protocol';
-import { getToken } from '../auth/storage';
+import { firebaseAuth } from '../firebase';
 
 /** Base URL of the relay. Overridable with `VITE_API_URL` at build time. */
 export const API_URL: string =
@@ -102,8 +100,10 @@ export async function request<T>(
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (options.body !== undefined) headers['Content-Type'] = 'application/json';
 
-  const token = getToken();
-  if (options.auth !== false && token) headers.Authorization = `Bearer ${token}`;
+  if (options.auth !== false) {
+    const token = await currentIdToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+  }
 
   let response: Response;
   try {
@@ -156,22 +156,16 @@ export async function request<T>(
 
 // --- Auth ------------------------------------------------------------------
 
-export function register(email: string, password: string): Promise<AuthResponse> {
-  return request('/api/auth/register', AuthResponseSchema, {
-    method: 'POST',
-    body: { email, password },
-    auth: false,
-  });
+/**
+ * Fresh Firebase ID token for the signed-in user, or null when signed out.
+ * The SDK caches the token and refreshes it automatically as needed.
+ */
+async function currentIdToken(): Promise<string | null> {
+  const user = firebaseAuth.currentUser;
+  return user ? user.getIdToken() : null;
 }
 
-export function login(email: string, password: string): Promise<AuthResponse> {
-  return request('/api/auth/login', AuthResponseSchema, {
-    method: 'POST',
-    body: { email, password },
-    auth: false,
-  });
-}
-
+/** The relay-side user resolved from the current Firebase ID token. */
 export function fetchMe(): Promise<AuthUser> {
   return request('/api/auth/me', AuthUserSchema);
 }

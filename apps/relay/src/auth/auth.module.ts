@@ -1,18 +1,17 @@
 import { Global, Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './jwt-auth.guard';
+import { FIREBASE_AUTH, firebaseAuthProvider } from './firebase-admin.provider';
+import { FirebaseAuthGuard } from './firebase-auth.guard';
+import { UsersService } from './users.service';
 
 /**
- * Global so `JwtAuthGuard` and `JwtService` are injectable from any module
- * without re-importing.
+ * Global so `FirebaseAuthGuard` is injectable from any module without
+ * re-importing.
  */
 @Global()
 @Module({
-  imports: [JwtModule.register({})],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthGuard],
-  exports: [AuthService, JwtAuthGuard, JwtModule],
+  providers: [firebaseAuthProvider, UsersService, FirebaseAuthGuard],
+  exports: [FIREBASE_AUTH, UsersService, FirebaseAuthGuard],
 })
 export class AuthModule {}

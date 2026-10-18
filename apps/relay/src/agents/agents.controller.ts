@@ -16,7 +16,7 @@ import {
   type PairResponse,
   type PairingCodeResponse,
 } from '@vima/protocol';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 import { CurrentUser } from '../common/current-user.decorator';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { AgentsService } from './agents.service';
@@ -37,7 +37,7 @@ export class AgentPairController {
 }
 
 @Controller('api/agents')
-@UseGuards(JwtAuthGuard)
+@UseGuards(FirebaseAuthGuard)
 export class AgentsController {
   constructor(private readonly agents: AgentsService) {}
 

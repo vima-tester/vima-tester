@@ -29,24 +29,18 @@ export type PairingCodeResponse = z.infer<typeof PairingCodeResponseSchema>;
 
 // --- Auth ------------------------------------------------------------------
 
-export const CredentialsSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8).max(200),
-});
-
+/**
+ * The browser authenticates directly against Firebase and sends the resulting
+ * ID token as `Authorization: Bearer <token>`. The relay verifies it and owns
+ * the database row; `AuthUser.id` is the relay's own user id, not the Firebase
+ * UID (which is stored on the row).
+ */
 export const AuthUserSchema = z.object({
   id: z.string(),
   email: z.string(),
 });
 
-export const AuthResponseSchema = z.object({
-  accessToken: z.string(),
-  user: AuthUserSchema,
-});
-
-export type Credentials = z.infer<typeof CredentialsSchema>;
 export type AuthUser = z.infer<typeof AuthUserSchema>;
-export type AuthResponse = z.infer<typeof AuthResponseSchema>;
 
 // --- Agents ----------------------------------------------------------------
 
