@@ -1,6 +1,7 @@
 import { API_URL } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Link, useRouter } from '../router';
+import { Logo } from './Logo';
 
 /**
  * Top bar shared by the tester and the docs page: brand, primary nav, the
@@ -14,7 +15,7 @@ export function TopNav(): JSX.Element {
     <header className="app-header">
       <div className="header-left">
         <Link to="/" className="brand">
-          <span className="brand-mark" aria-hidden="true" />
+          <Logo size={26} className="brand-logo" />
           vima tester
         </Link>
         <nav className="main-nav" aria-label="Primary">

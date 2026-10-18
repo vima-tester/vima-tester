@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { isFirebaseConfigured } from '../firebase';
 import { Link } from '../router';
+import { Logo } from './Logo';
 
 type Mode = 'login' | 'register';
 
@@ -102,7 +103,10 @@ export function AuthForm() {
   return (
     <div className="auth-screen">
       <form className="card auth-card" onSubmit={handleSubmit}>
-        <h1 className="brand">vima tester</h1>
+        <div className="auth-brand">
+          <Logo size={64} className="auth-logo" />
+          <h1 className="brand">vima tester</h1>
+        </div>
         <p className="muted">
           Test APIs running on <strong>your own</strong> localhost. Requests are relayed to your
           paired local agent, never sent from the browser directly.

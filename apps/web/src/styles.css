@@ -181,13 +181,15 @@ pre {
   letter-spacing: -0.02em;
 }
 
-.brand-mark {
+.logo {
   flex: 0 0 auto;
-  width: 18px;
-  height: 18px;
-  border-radius: 5px;
-  background: linear-gradient(135deg, var(--accent-strong), var(--green));
-  box-shadow: 0 0 14px rgba(76, 141, 255, 0.5);
+  display: block;
+  object-fit: contain;
+}
+
+.brand-logo {
+  width: 26px;
+  height: 26px;
 }
 
 .header-right {
@@ -740,6 +742,22 @@ textarea {
 .auth-footer {
   margin: 4px 0 0;
   text-align: center;
+}
+
+.auth-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.auth-logo {
+  width: 64px;
+  height: 64px;
+}
+
+.auth-brand .brand {
+  font-size: 22px;
 }
 
 /* --- Docs page ---------------------------------------------------------- */
