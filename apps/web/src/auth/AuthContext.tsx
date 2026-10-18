@@ -42,8 +42,14 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
   // re-resolve the relay-side user, which find-or-creates the database row for
   // the Firebase UID.
   useEffect(() => {
+    const auth = firebaseAuth;
+    if (!auth) {
+      // Firebase is not configured: there is no session to observe.
+      setStatus('anonymous');
+      return;
+    }
     let cancelled = false;
-    const unsubscribe = onAuthStateChanged(firebaseAuth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (cancelled) return;
       if (!firebaseUser) {
         setUser(null);
@@ -61,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
           if (cancelled) return;
           if (error instanceof ApiRequestError && error.statusCode === 401) {
             // The relay rejected the token: drop the Firebase session too.
-            void firebaseSignOut(firebaseAuth);
+            void firebaseSignOut(auth);
             return;
           }
           // Relay unreachable: stay signed in at the Firebase level so a relay
@@ -77,27 +83,32 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
   }, []);
 
   const logout = useCallback(async () => {
-    await firebaseSignOut(firebaseAuth);
+    if (firebaseAuth) await firebaseSignOut(firebaseAuth);
     // Drop cached relay data so the next user never sees the previous session.
     queryClient.clear();
   }, [queryClient]);
 
   // Any 401 from the API means the ID token was rejected: end the session.
   useEffect(() => {
-    const handler = () => void firebaseSignOut(firebaseAuth);
+    const handler = () => {
+      if (firebaseAuth) void firebaseSignOut(firebaseAuth);
+    };
     window.addEventListener(UNAUTHORIZED_EVENT, handler);
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, handler);
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
+    if (!firebaseAuth) throw new Error('Firebase is not configured.');
     await signInWithPopup(firebaseAuth, new GoogleAuthProvider());
   }, []);
 
   const signInWithEmail = useCallback(async (email: string, password: string) => {
+    if (!firebaseAuth) throw new Error('Firebase is not configured.');
     await signInWithEmailAndPassword(firebaseAuth, email, password);
   }, []);
 
   const registerWithEmail = useCallback(async (email: string, password: string) => {
+    if (!firebaseAuth) throw new Error('Firebase is not configured.');
     await createUserWithEmailAndPassword(firebaseAuth, email, password);
   }, []);
 

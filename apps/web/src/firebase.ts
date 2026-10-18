@@ -18,7 +18,14 @@ export const isFirebaseConfigured: boolean = Boolean(
   firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId && firebaseConfig.appId,
 );
 
-export const firebaseApp: FirebaseApp = initializeApp(firebaseConfig);
+export const firebaseApp: FirebaseApp | null = isFirebaseConfigured
+  ? initializeApp(firebaseConfig)
+  : null;
 
-/** The single Firebase Auth instance used for Google and email sign-in. */
-export const firebaseAuth: Auth = getAuth(firebaseApp);
+/**
+ * The single Firebase Auth instance used for Google and email sign-in, or null
+ * when the project is not configured. Guarding here (instead of always calling
+ * `getAuth`) keeps the app — including the public docs page — renderable with a
+ * clear hint rather than a blank screen.
+ */
+export const firebaseAuth: Auth | null = firebaseApp ? getAuth(firebaseApp) : null;

@@ -161,7 +161,7 @@ export async function request<T>(
  * The SDK caches the token and refreshes it automatically as needed.
  */
 async function currentIdToken(): Promise<string | null> {
-  const user = firebaseAuth.currentUser;
+  const user = firebaseAuth?.currentUser;
   return user ? user.getIdToken() : null;
 }
 
