@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { isFirebaseConfigured } from '../firebase';
+import { Link } from '../router';
 
 type Mode = 'login' | 'register';
 
@@ -119,7 +120,7 @@ export function AuthForm() {
           className="button google"
           type="button"
           onClick={() => void handleGoogle()}
-          disabled={pending}
+          disabled={pending || !isFirebaseConfigured}
         >
           Continue with Google
         </button>
@@ -159,13 +160,17 @@ export function AuthForm() {
           </p>
         )}
 
-        <button className="button primary" type="submit" disabled={pending}>
+        <button className="button primary" type="submit" disabled={pending || !isFirebaseConfigured}>
           {pending ? 'Working…' : MODE_COPY[mode].submit}
         </button>
 
         <button className="button link" type="button" onClick={switchMode}>
           {MODE_COPY[mode].switch}
         </button>
+
+        <p className="muted small auth-footer">
+          New here? Read the <Link to="/docs">setup guide</Link> to install and pair the local agent.
+        </p>
       </form>
     </div>
   );

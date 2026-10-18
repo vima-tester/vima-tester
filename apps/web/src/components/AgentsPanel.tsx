@@ -95,7 +95,8 @@ export function AgentsPanel() {
       </div>
 
       <p className="muted small">
-        Run the local agent and give it a pairing code. Codes are single-use and short-lived.
+        Run the local agent and give it a pairing code. Codes are single-use and short-lived.{' '}
+        <a href="/docs#pair">How to pair →</a>
       </p>
 
       {pairing && (
