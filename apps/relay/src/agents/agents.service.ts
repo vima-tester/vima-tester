@@ -38,6 +38,9 @@ export class AgentsService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
+    // Wait for the boot-time DB connection before querying: module-init hooks
+    // run concurrently, so without this the index load can race the connect.
+    await this.prisma.ready();
     await this.ensureLoaded();
   }
 

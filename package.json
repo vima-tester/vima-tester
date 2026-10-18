@@ -17,8 +17,6 @@
     "dev": "concurrently -n relay,web -c blue,magenta \"npm:dev:relay\" \"npm:dev:web\"",
     "dev:relay": "npm run dev -w @vima/relay",
     "dev:web": "npm run dev -w @vima/web",
-    "db:up": "docker compose up -d db",
-    "db:down": "docker compose down",
     "db:migrate": "npm run prisma:migrate -w @vima/relay",
     "db:generate": "npm run prisma:generate -w @vima/relay"
   },
