@@ -82,6 +82,7 @@ npm run db:migrate  # prisma migrate dev (relay, local only)
 npm run db:deploy   # prisma migrate deploy (relay)
 npm run build:relay # generate prisma client + build protocol then relay
 npm run start:relay # start the relay from the repo root
+npm run build:web   # build protocol then the web app (apps/web/dist)
 ```
 
 Run a single workspace: `npm run <script> -w @vima/relay` (or `@vima/web`,
@@ -118,12 +119,22 @@ from `apps/relay`) and build `@vima/protocol` before the relay.
 
 **Web** (`apps/web`, static `dist/`):
 
-1. Set `VITE_API_URL` to the public relay URL plus the `VITE_FIREBASE_*` values
-   (all are inlined at build time), then `npm run build -w @vima/web`.
-2. Serve `dist/` with an SPA fallback (rewrite unknown paths to `index.html`) so
-   the `/docs` route survives a refresh or deep link.
-3. Add the deployed origin under Firebase
+1. Set `VITE_API_URL` to the public relay URL plus the four `VITE_FIREBASE_*`
+   values. All `VITE_*` vars are **inlined at build time**, so they must be set
+   in the build environment (changing them needs a rebuild, not just a restart).
+2. Build: `npm ci --include=dev && npm run build:web` (builds the protocol, then
+   the web app). Upload `apps/web/dist`.
+3. Serve the output with an **SPA fallback** (rewrite unknown paths to
+   `index.html`) so the `/docs` route survives a refresh or deep link.
+4. Add the deployed origin under Firebase
    *Authentication → Settings → Authorized domains*.
+
+> **Render static site.** Root Directory = repository root (blank/default);
+> Build Command = `npm ci --include=dev && npm run build:web`; Publish
+> Directory = `apps/web/dist`. Add the environment variables from step 1 (choose
+> the appropriate environment), then add a **Rewrite** rule: Source `/*` →
+> Destination `/index.html` (Rewrite, not Redirect) so `/docs` works on reload.
+> Finally set the relay service's `CORS_ORIGIN` to this site's exact origin.
 
 ### Operational notes
 
