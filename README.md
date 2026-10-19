@@ -78,12 +78,47 @@ npm run build       # build protocol -> relay -> web (order matters)
 npm test            # protocol (vitest) + relay (jest) unit tests
 npm run typecheck   # all workspaces
 npm run dev         # relay + web together
-npm run db:migrate  # prisma migrate dev (relay)
+npm run db:migrate  # prisma migrate dev (relay, local only)
+npm run db:deploy   # prisma migrate deploy (relay)
 ```
 
 Run a single workspace: `npm run <script> -w @vima/relay` (or `@vima/web`,
 `@vima/protocol`). Run one relay test:
 `npm test -w @vima/relay -- jobs.service`.
+
+## Deploying
+
+The relay and the web app are deployed separately.
+
+**Relay** (`apps/relay`, runs as `node dist/main`):
+
+1. Set the environment (see `.env.example`): `NODE_ENV=production`,
+   `DATABASE_URL`, `CORS_ORIGIN` (the exact web origin), the three `FIREBASE_*`
+   admin vars, and `TRUST_PROXY=true` when behind a proxy/load balancer.
+2. Run migrations as a release step: `npm run db:deploy`.
+3. Build and start: `npm run build && npm run start -w @vima/relay`.
+4. Terminate TLS at the proxy/load balancer — the agent connects over
+   `https://` / `wss://`, so the public relay URL must be HTTPS.
+
+**Web** (`apps/web`, static `dist/`):
+
+1. Set `VITE_API_URL` to the public relay URL plus the `VITE_FIREBASE_*` values
+   (all are inlined at build time), then `npm run build -w @vima/web`.
+2. Serve `dist/` with an SPA fallback (rewrite unknown paths to `index.html`) so
+   the `/docs` route survives a refresh or deep link.
+3. Add the deployed origin under Firebase
+   *Authentication → Settings → Authorized domains*.
+
+### Operational notes
+
+- **Run exactly one relay instance.** Agent connections and the token index live
+  in process memory and jobs dispatch only through the local process, so a second
+  replica cannot reach an agent connected to the first. Scale only after adding a
+  shared registry (e.g. Redis pub/sub).
+- `GET /api/health` is a readiness probe: it returns `503` when the database is
+  unreachable.
+- Pairing (`POST /api/agent/pair`) is rate limited per client IP; the `/docs`
+  page is public while the tester requires a Firebase session.
 
 ## Security model
 

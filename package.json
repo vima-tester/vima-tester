@@ -18,6 +18,7 @@
     "dev:relay": "npm run dev -w @vima/relay",
     "dev:web": "npm run dev -w @vima/web",
     "db:migrate": "npm run prisma:migrate -w @vima/relay",
+    "db:deploy": "npm run prisma:deploy -w @vima/relay",
     "db:generate": "npm run prisma:generate -w @vima/relay"
   },
   "devDependencies": {
