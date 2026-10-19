@@ -80,6 +80,8 @@ npm run typecheck   # all workspaces
 npm run dev         # relay + web together
 npm run db:migrate  # prisma migrate dev (relay, local only)
 npm run db:deploy   # prisma migrate deploy (relay)
+npm run build:relay # generate prisma client + build protocol then relay
+npm run start:relay # start the relay from the repo root
 ```
 
 Run a single workspace: `npm run <script> -w @vima/relay` (or `@vima/web`,
@@ -88,17 +90,31 @@ Run a single workspace: `npm run <script> -w @vima/relay` (or `@vima/web`,
 
 ## Deploying
 
-The relay and the web app are deployed separately.
+The relay and the web app are deployed separately. This is an npm-workspaces
+monorepo, so any platform must **run its commands from the repository root** (not
+from `apps/relay`) and build `@vima/protocol` before the relay.
 
 **Relay** (`apps/relay`, runs as `node dist/main`):
 
-1. Set the environment (see `.env.example`): `NODE_ENV=production`,
-   `DATABASE_URL`, `CORS_ORIGIN` (the exact web origin), the three `FIREBASE_*`
-   admin vars, and `TRUST_PROXY=true` when behind a proxy/load balancer.
+1. Set the environment (see `.env.example`): `DATABASE_URL`, `CORS_ORIGIN` (the
+   exact web origin), the three `FIREBASE_*` admin vars, and `TRUST_PROXY=true`
+   when behind a proxy/load balancer. Keep `NODE_ENV=production` for runtime.
 2. Run migrations as a release step: `npm run db:deploy`.
-3. Build and start: `npm run build && npm run start -w @vima/relay`.
+3. Build and start:
+   - Build: `npm ci --include=dev && npm run build:relay` — `build:relay`
+     generates the Prisma client, then builds the protocol and the relay in
+     order. `--include=dev` is required because `@nestjs/cli` and `prisma` are
+     devDependencies; without it (or with `NODE_ENV=production` during install)
+     the build fails with `nest: command not found` (exit `127`).
+   - Start: `npm run start:relay`.
 4. Terminate TLS at the proxy/load balancer — the agent connects over
    `https://` / `wss://`, so the public relay URL must be HTTPS.
+
+> **Render / Railway-style services.** Leave the service **Root Directory** at
+> the repository root (blank/default). Don't point it at `apps/relay`: the
+> `nest` CLI and the `@vima/protocol` workspace live at the root, so a
+> subdirectory build both fails to find `nest` (`127`) and never builds the
+> protocol the relay imports. Use the build/start commands from step 3.
 
 **Web** (`apps/web`, static `dist/`):
 

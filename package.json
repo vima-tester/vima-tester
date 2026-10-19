@@ -12,6 +12,8 @@
   ],
   "scripts": {
     "build": "npm run build -w @vima/protocol && npm run build -w @vima/relay && npm run build -w @vima/web",
+    "build:relay": "npm run db:generate && npm run build -w @vima/protocol && npm run build -w @vima/relay",
+    "start:relay": "npm run start -w @vima/relay",
     "test": "npm run test -w @vima/protocol && npm run test -w @vima/relay",
     "typecheck": "npm run typecheck -w @vima/protocol && npm run typecheck -w @vima/relay && npm run typecheck -w @vima/web",
     "dev": "concurrently -n relay,web -c blue,magenta \"npm:dev:relay\" \"npm:dev:web\"",
