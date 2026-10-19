@@ -11,6 +11,17 @@ export const EnvSchema = z.object({
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   PAIRING_CODE_TTL_SECONDS: z.coerce.number().int().positive().default(600),
 
+  // Upper bound for request bodies the relay accepts. Express' 100 kB default is
+  // too small for API payloads; the agent caps *response* bodies separately.
+  MAX_REQUEST_BODY_BYTES: z.coerce.number().int().positive().default(26_214_400),
+
+  // Set "true" when running behind a trusted reverse proxy so rate limiting and
+  // logs use the client IP from `X-Forwarded-For` instead of the proxy socket.
+  TRUST_PROXY: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
+
   // Firebase Admin service-account credentials, used to verify browser ID
   // tokens. Mirrors the Firebase web config used by apps/web.
   FIREBASE_PROJECT_ID: z.string().min(1, 'FIREBASE_PROJECT_ID is required'),
