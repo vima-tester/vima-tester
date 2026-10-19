@@ -8,6 +8,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import {
   PairRequestSchema,
   type AgentSummary,
@@ -26,6 +27,7 @@ import { AgentsService } from './agents.service';
  * the single-use pairing code, so it is intentionally unauthenticated.
  */
 @Controller('api/agent')
+@UseGuards(ThrottlerGuard)
 export class AgentPairController {
   constructor(private readonly agents: AgentsService) {}
 
