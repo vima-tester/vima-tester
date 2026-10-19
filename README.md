@@ -135,6 +135,12 @@ from `apps/relay`) and build `@vima/protocol` before the relay.
 > the appropriate environment), then add a **Rewrite** rule: Source `/*` →
 > Destination `/index.html` (Rewrite, not Redirect) so `/docs` works on reload.
 > Finally set the relay service's `CORS_ORIGIN` to this site's exact origin.
+>
+> **Vercel.** Import the repo with **Root Directory = repository root** and the
+> settings in the committed `vercel.json` (build `npm run build:web`, output
+> `apps/web/dist`, SPA rewrite, asset caching). Set the `VITE_*` variables for
+> the Production environment in the project settings. Then add the Vercel
+> domain to the relay's `CORS_ORIGIN` and to Firebase *Authorized domains*.
 
 ### Operational notes
 
